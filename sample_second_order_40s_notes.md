@@ -32,7 +32,7 @@ The companion `sample_first_order_40s.csv` uses the same time points and input v
 
 1. On the opening screen, select **Import existing CSV**. This skips system simulation.
 2. Choose `sample_second_order_40s.csv`.
-3. Keep **Balanced** model complexity (ARX `na=2, nb=2, nk=1`).
+3. Select **Balanced** model complexity (ARX `na=2, nb=2, nk=1`); imported CSVs start with **Simple**.
 4. Select **Fit the model**. The first 70% of the imported measurements estimate the coefficients; the final 30% validate the free-run prediction.
 5. Discuss the shaded validation region, fit score, and residuals.
 
