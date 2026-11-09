@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7f4">
+  <title>System Lab — Learn from a response</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand" aria-label="System Lab">
+          <span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="brand-name">System Lab</span>
+          <span class="brand-divider"></span>
+          <span class="brand-subtitle">Identification workbench</span>
+        </div>
+        <div class="header-right">
+          <span class="privacy-note"><span class="privacy-dot"></span> Runs in your browser</span>
+          <button class="header-help" id="helpButton" type="button">How it works</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="intro">
+        <div class="intro-kicker">AN INTERACTIVE SYSTEM IDENTIFICATION LAB</div>
+        <h1>Build a model from a response.</h1>
+        <p>Simulate a system or import existing measurements, then see how closely a mathematical model reproduces the response.</p>
+      </div>
+
+      <nav class="stepper" aria-label="Experiment steps">
+        <button type="button" class="step-link active" data-step="1"><span class="step-number">1</span><span class="step-copy"><strong>Start with data</strong><small>Simulate or import</small></span></button>
+        <button type="button" class="step-link" data-step="2"><span class="step-number">2</span><span class="step-copy"><strong>Set up simulation</strong><small id="step2Subtitle">Give it a signal</small></span></button>
+        <button type="button" class="step-link" data-step="3"><span class="step-number">3</span><span class="step-copy"><strong>Fit a model</strong><small>Estimate its behavior</small></span></button>
+        <button type="button" class="step-link" data-step="4"><span class="step-number">4</span><span class="step-copy"><strong>Check the fit</strong><small>See what it learned</small></span></button>
+      </nav>
+
+      <section class="stage" id="stage1" aria-labelledby="stage1Title">
+        <div class="stage-layout">
+          <article class="surface primary-surface">
+            <div class="stage-heading"><span class="stage-label">START HERE</span><h2 id="stage1Title">Choose where the data comes from</h2><p>Import an existing record, or select a system below to create new measurements.</p></div>
+            <div class="import-shortcut"><div><strong>Already have a CSV?</strong><span>Use its recorded input and output as-is. The system choice below is skipped.</span></div><label class="secondary-button import-button">Import existing CSV<input id="fileInput" type="file" accept=".csv,text/csv" hidden></label></div>
+            <div class="section-rule"><span>OR SIMULATE A SYSTEM</span><i></i></div>
+            <div class="choice-grid system-choices">
+              <button type="button" class="choice-card selected" data-system="first" aria-pressed="true"><span class="choice-top"><span class="choice-radio"></span><strong>First order</strong></span><span class="choice-description">A smooth rise or fall toward a final value.</span><span class="choice-formula">G(s) = K / (τs + 1)</span></button>
+              <button type="button" class="choice-card" data-system="second" aria-pressed="false"><span class="choice-top"><span class="choice-radio"></span><strong>Second order</strong></span><span class="choice-description">Can overshoot or oscillate before settling.</span><span class="choice-formula">G(s) = Kω² / (s² + 2ζωs + ω²)</span></button>
+            </div>
+            <div class="section-rule"><span>PROCESS PARAMETERS</span><i></i></div>
+            <div class="parameter-area" id="systemParameters">
+              <div class="control-row"><div><label for="gain">Gain <span class="math-label">K</span></label><p>How large the final response becomes.</p></div><div class="range-control"><input id="gain" type="range" min="0.4" max="3" step="0.1" value="1.8"><output id="gainValue" for="gain">1.8</output></div></div>
+              <div class="control-row first-only"><div><label for="tau">Time constant <span class="math-label">τ</span></label><p>How quickly the system approaches its final value.</p></div><div class="range-control"><input id="tau" type="range" min="0.3" max="6" step="0.1" value="2.4"><output id="tauValue" for="tau">2.4 s</output></div></div>
+              <div class="control-row second-only hidden"><div><label for="zeta">Damping ratio <span class="math-label">ζ</span></label><p>Lower damping creates more overshoot.</p></div><div class="range-control"><input id="zeta" type="range" min="0.1" max="1.5" step="0.05" value="0.45"><output id="zetaValue" for="zeta">0.45</output></div></div>
+              <div class="control-row second-only hidden"><div><label for="wn">Natural frequency <span class="math-label">ω</span></label><p>Higher frequency makes the response faster.</p></div><div class="range-control"><input id="wn" type="range" min="0.4" max="5" step="0.1" value="2.1"><output id="wnValue" for="wn">2.1 rad/s</output></div></div>
+            </div>
+            <div class="stage-action"><span>This selection is used only when you generate new measurements.</span><button class="primary-button" type="button" id="toStep2">Continue with simulation</button></div>
+          </article>
+          <aside class="surface preview-surface">
+            <div class="preview-heading"><div><span class="small-label">LIVE PREVIEW</span><h3>Response to a step input</h3></div><span class="live-indicator">Updates as you adjust</span></div>
+            <div class="chart-container system-chart"><canvas id="systemChart" aria-label="System response to a unit step"></canvas><div class="plot-tooltip" id="systemTooltip"></div></div>
+            <div class="chart-legend"><span><i class="line-swatch teal"></i>System output</span><span>Time (seconds)</span></div>
+            <div class="explain-box"><span class="explain-title">WHAT YOU'RE SEEING</span><p id="systemInsight">The output gradually approaches the final level set by the gain. A longer time constant makes that rise slower.</p></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="stage2" aria-labelledby="stage2Title">
+        <div class="stage-layout">
+          <article class="surface primary-surface">
+            <div class="stage-heading"><span class="stage-label">STEP 2 OF 4</span><h2 id="stage2Title">Give the system an input</h2><p>The input reveals how the system behaves. Try different signals and watch the preview respond.</p></div>
+            <div class="section-rule"><span>INPUT SIGNAL</span><i></i></div>
+            <div class="choice-grid signal-choices">
+              <button type="button" class="choice-card selected" data-signal="step" aria-pressed="true"><span class="choice-top"><span class="choice-radio"></span><strong>Step sequence</strong></span><span class="choice-description">A clear starting point for observing rise and settling.</span></button>
+              <button type="button" class="choice-card" data-signal="prbs" aria-pressed="false"><span class="choice-top"><span class="choice-radio"></span><strong>Random switches</strong></span><span class="choice-description">Repeated changes reveal more of the dynamics.</span></button>
+              <button type="button" class="choice-card" data-signal="sine" aria-pressed="false"><span class="choice-top"><span class="choice-radio"></span><strong>Sine sweep</strong></span><span class="choice-description">A smooth signal that changes frequency over time.</span></button>
+              <button type="button" class="choice-card" data-signal="levels" aria-pressed="false"><span class="choice-top"><span class="choice-radio"></span><strong>Multiple levels</strong></span><span class="choice-description">Several levels probe the response range.</span></button>
+            </div>
+            <div class="section-rule"><span>MEASUREMENT CONDITIONS</span><i></i></div>
+            <div class="parameter-area">
+              <div class="control-row"><div><label for="sampleTime">Time between samples</label><p>Shorter intervals capture faster changes.</p></div><div class="range-control"><input id="sampleTime" type="range" min="0.05" max="0.5" step="0.05" value="0.1"><output id="sampleValue" for="sampleTime">0.10 s</output></div></div>
+              <div class="control-row"><div><label for="noiseLevel">Measurement noise</label><p>Random variation added to the observed output.</p></div><div class="range-control"><input id="noiseLevel" type="range" min="0" max="12" step="0.5" value="2"><output id="noiseValue" for="noiseLevel">2.0%</output></div></div>
+              <div class="control-row"><div><label for="duration">Record duration</label><p>How long the experiment runs.</p></div><div class="range-control"><input id="duration" type="range" min="10" max="50" step="5" value="20"><output id="durationValue" for="duration">20 s</output></div></div>
+            </div>
+            <div class="stage-action"><span>This creates data from the selected first- or second-order system.</span><button class="primary-button" type="button" id="generateButton">Generate measurements</button></div>
+          </article>
+          <aside class="surface preview-surface">
+            <div class="preview-heading"><div><span class="small-label">LIVE PREVIEW</span><h3>What the system will see</h3></div></div>
+            <div class="preview-tabs"><button type="button" class="preview-tab active" data-preview="input">Input signal</button><button type="button" class="preview-tab" data-preview="output">System output</button></div>
+            <div class="chart-container data-chart"><canvas id="previewChart" aria-label="Live input or output preview"></canvas><div class="plot-tooltip" id="previewTooltip"></div></div>
+            <div class="chart-legend"><span id="previewLegend"><i class="line-swatch blue"></i>Input signal</span><span>Time (seconds)</span></div>
+            <div class="explain-box"><span class="explain-title">WHY THIS MATTERS</span><p id="inputInsight">The step sequence makes the system's gain and response speed easy to see. A more varied input can reveal more detail.</p></div>
+            <div class="data-readout"><span>Estimated samples</span><strong id="previewSamples">201</strong></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="stage3" aria-labelledby="stage3Title">
+        <div class="stage-layout">
+          <article class="surface primary-surface">
+            <div class="stage-heading"><span class="stage-label">STEP 3 OF 4</span><h2 id="stage3Title">Fit a mathematical model</h2><p id="fitIntro">The ARX method learns a relationship between past inputs and outputs. Choose how much past behavior it should use.</p></div>
+            <div class="method-card"><span class="method-label">THE MODEL'S IDEA</span><p>Predict the next output using earlier outputs and the input signal. The app estimates those relationships from the first 70% of your measurements.</p><div class="method-formula">past outputs + past inputs → predicted output</div></div>
+            <div class="section-rule"><span>MODEL COMPLEXITY</span><i></i></div>
+            <div class="preset-list">
+              <button type="button" class="preset-card selected" data-preset="simple" aria-pressed="true"><span class="preset-radio"></span><span><strong>Simple</strong><small>Few parameters, easy to interpret</small></span><span class="preset-order">1 / 1</span></button>
+              <button type="button" class="preset-card" data-preset="balanced" aria-pressed="false"><span class="preset-radio"></span><span><strong>Balanced</strong><small>A good starting point for most experiments</small></span><span class="preset-order">2 / 2</span></button>
+              <button type="button" class="preset-card" data-preset="flexible" aria-pressed="false"><span class="preset-radio"></span><span><strong>Flexible</strong><small>Can capture richer dynamics</small></span><span class="preset-order">4 / 4</span></button>
+            </div>
+            <details class="advanced-settings" id="advancedSettings"><summary>Set the model order manually</summary><div class="order-fields"><label>Past outputs <span>na</span><input id="orderNa" type="number" min="1" max="6" value="1"></label><label>Input terms <span>nb</span><input id="orderNb" type="number" min="1" max="6" value="1"></label><label>Input delay <span>nk</span><input id="orderNk" type="number" min="1" max="8" value="1"></label></div></details>
+            <div class="stage-action"><button class="text-back" type="button" id="backToData">Back to data</button><button class="primary-button" type="button" id="fitButton">Fit the model</button></div>
+          </article>
+          <aside class="surface preview-surface">
+            <div class="preview-heading"><div><span class="small-label">DATA READY</span><h3>The measurements we'll use</h3></div></div>
+            <div class="data-summary"><div><span>Source</span><strong id="dataSource">Simulated experiment</strong></div><div><span>Samples</span><strong id="dataSamples">201</strong></div><div><span>Sampling interval</span><strong id="dataInterval">0.10 s</strong></div></div>
+            <p class="data-origin-note" id="dataOriginNote"></p>
+            <div class="chart-container fit-chart"><canvas id="fitPreviewChart" aria-label="Measured output ready for fitting"></canvas><div class="plot-tooltip" id="fitPreviewTooltip"></div></div>
+            <div class="chart-legend"><span><i class="line-swatch teal"></i>Measured output</span><span>Time (seconds)</span></div>
+            <div class="explain-box"><span class="explain-title">WHAT HAPPENS NEXT</span><p>The model will learn from the first part of the record. We then ask it to predict the remaining part without using those measured outputs.</p></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stage hidden" id="stage4" aria-labelledby="stage4Title">
+        <div class="results-head"><div><span class="stage-label">STEP 4 OF 4</span><h2 id="stage4Title">See what the model learned</h2><p id="resultsIntro">The final 30% of the record was held aside to check the model's predictions.</p></div><button class="secondary-button" type="button" id="exportButton">Export results as CSV</button></div>
+        <div class="result-metrics"><div class="result-metric"><span>Validation fit</span><strong id="fitMetric">—</strong><small id="fitDescriptor">How closely the model follows unseen data</small></div><div class="result-metric"><span>Prediction error</span><strong id="rmseMetric">—</strong><small>Root mean square error</small></div><div class="result-metric"><span>Residual spread</span><strong id="spreadMetric">—</strong><small>Standard deviation of prediction errors</small></div></div>
+        <article class="surface result-chart-surface"><div class="result-chart-header"><div><span class="small-label">VALIDATION PLOT</span><h3>Measured output vs. model prediction</h3><p id="plotExplanation">The shaded region is the part the model did not see during fitting.</p></div><div class="series-controls"><button type="button" class="series-button active" data-series="measured"><i class="line-swatch teal"></i>Measured</button><button type="button" class="series-button active" data-series="predicted"><i class="line-swatch orange"></i>Predicted</button></div></div><div class="chart-container comparison-chart"><canvas id="comparisonChart" aria-label="Measured and predicted output with validation region"></canvas><div class="plot-tooltip" id="comparisonTooltip"></div></div><div class="chart-footnote">Training data <span>·</span> Held-out validation data</div></article>
+        <div class="result-lower">
+          <article class="surface residual-surface"><div class="result-chart-header"><div><span class="small-label">ERROR CHECK</span><h3>Prediction residuals</h3><p>Differences should be small and fairly unstructured.</p></div></div><div class="chart-container residual-chart"><canvas id="residualChart" aria-label="Prediction residuals"></canvas><div class="plot-tooltip" id="residualTooltip"></div></div><div class="residual-stats"><span>Mean <strong id="residualMean">—</strong></span><span>Lag correlation <strong id="residualCorrelation">—</strong></span></div></article>
+          <article class="surface transfer-surface"><span class="small-label">ESTIMATED TRANSFER FUNCTION</span><h3>The model in mathematical form</h3><div class="transfer-function"><span>G(z) =</span><div class="fraction"><div id="transferNumerator">—</div><div id="transferDenominator">—</div></div></div><p id="modelOrderText">ARX order: —</p><details class="coefficient-details"><summary>View estimated coefficients</summary><div id="coefficientTable"></div></details></article>
+        </div>
+        <div class="interpretation"><div><span class="small-label">HOW TO READ THIS RESULT</span><h3 id="resultHeadline">What the fit tells you</h3><p id="resultExplanation"></p></div><div class="next-actions"><button class="secondary-button" type="button" id="adjustModel">Try another model order</button><button class="primary-button" type="button" id="startAgain">Start a new experiment</button></div></div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog class="help-dialog" id="helpDialog"><button type="button" class="dialog-close" id="closeHelp" aria-label="Close">Close</button><span class="small-label">A QUICK GUIDE</span><h2>From measurements to a model</h2><ol><li><strong>Choose a data source.</strong> Import a CSV as-is, or select a first- or second-order system to simulate.</li><li><strong>If simulating, set the input.</strong> Adjust the signal and measurement conditions, then generate data.</li><li><strong>Fit a model.</strong> Choose ARX complexity, then estimate its coefficients.</li><li><strong>Check the fit.</strong> Compare held-out measurements with the prediction and inspect the errors.</li></ol><p>Importing skips simulation. The first- or second-order selection does not change an imported file. CSV columns: <code>time</code>, <code>input</code>, <code>output</code>.</p></dialog>
+  <script src="app.js"></script>
+</body>
+</html>
